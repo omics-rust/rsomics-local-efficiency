@@ -1,0 +1,31 @@
+[package]
+name = "rsomics-local-efficiency"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+description = "Local efficiency of an undirected graph (port of networkx.local_efficiency)"
+license = "MIT OR Apache-2.0"
+keywords = ["graph", "efficiency", "bioinformatics", "network"]
+categories = ["command-line-utilities", "science"]
+repository = "https://github.com/omics-rust/rsomics-local-efficiency"
+readme = "README.md"
+
+[[bin]]
+name = "rsomics-local-efficiency"
+path = "src/main.rs"
+
+[lib]
+name = "rsomics_local_efficiency"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "local_efficiency"
+harness = false
