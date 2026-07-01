@@ -165,18 +165,20 @@ const GNM_50_200_SEED42: f64 = 2.750_498_879_427_451e-1;
 const GNM_100_500_SEED10: f64 = 1.612_561_899_237_264e-1;
 const GNM_100_500_SEED20: f64 = 1.469_988_740_601_135_5e-1;
 
+// Committed golden edge lists (frozen from networkx 3.6.1 `nx.gnm_random_graph(n, m, seed)`),
+// embedded at compile time so the tests never invoke Python — they run on any CI machine.
 fn gnm_edge_list(n: usize, m: usize, seed: u64) -> String {
-    use std::process::Command;
-    let script = format!(
-        "import networkx as nx\nG = nx.gnm_random_graph({n}, {m}, seed={seed})\nfor u,v in G.edges():\n    print(f'{{u}} {{v}}')\n"
-    );
-    let out = Command::new("/opt/homebrew/Caskroom/miniforge/base/envs/scanpy/bin/python3")
-        .arg("-c")
-        .arg(&script)
-        .output()
-        .expect("python3 not found");
-    assert!(out.status.success(), "python gnm failed");
-    String::from_utf8(out.stdout).unwrap()
+    let s: &str = match (n, m, seed) {
+        (50, 200, 1) => include_str!("golden/gnm_50_200_seed1.txt"),
+        (50, 200, 2) => include_str!("golden/gnm_50_200_seed2.txt"),
+        (50, 200, 3) => include_str!("golden/gnm_50_200_seed3.txt"),
+        (50, 200, 7) => include_str!("golden/gnm_50_200_seed7.txt"),
+        (50, 200, 42) => include_str!("golden/gnm_50_200_seed42.txt"),
+        (100, 500, 10) => include_str!("golden/gnm_100_500_seed10.txt"),
+        (100, 500, 20) => include_str!("golden/gnm_100_500_seed20.txt"),
+        _ => panic!("no committed golden edge list for gnm({n}, {m}, {seed})"),
+    };
+    s.to_string()
 }
 
 #[test]

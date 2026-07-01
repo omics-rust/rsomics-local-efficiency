@@ -1,6 +1,6 @@
 [package]
 name = "rsomics-local-efficiency"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.91"
 description = "Local efficiency of an undirected graph (port of networkx.local_efficiency)"
