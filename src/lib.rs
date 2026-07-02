@@ -12,11 +12,14 @@ use std::collections::{HashMap, HashSet, VecDeque};
 /// Parse an undirected edge list from text.
 ///
 /// Lines starting with `#` or blank are skipped (nx.read_edgelist convention).
-/// Self-loops are dropped. Parallel edges are deduplicated (nx.Graph semantics).
+/// Parallel edges are deduplicated (nx.Graph semantics). Self-loops are kept:
+/// networkx stores `v` in its own adjacency `G[v]`, so `adj[v]` includes `v`.
+/// This matters because `local_efficiency` induces a subgraph on `G[v]`, and a
+/// self-loop makes `v` a member of that neighbour set.
 /// Node IDs are assigned in first-seen order (matching networkx insertion order).
 ///
 /// Returns `(n, adj)` where `adj[i]` is the neighbour list of node `i` in
-/// insertion order.
+/// insertion order, including `i` itself when `i` carries a self-loop.
 pub fn parse_edge_list_ordered(input: &str) -> (usize, Vec<Vec<usize>>) {
     let mut name_to_id: HashMap<String, usize> = HashMap::new();
     let mut next_id = 0usize;
@@ -41,9 +44,7 @@ pub fn parse_edge_list_ordered(input: &str) -> (usize, Vec<Vec<usize>>) {
             next_id += 1;
             id
         });
-        if u != v {
-            parsed.push((u, v));
-        }
+        parsed.push((u, v));
     }
 
     let n = next_id;
@@ -51,8 +52,13 @@ pub fn parse_edge_list_ordered(input: &str) -> (usize, Vec<Vec<usize>>) {
     let mut seen: HashSet<(usize, usize)> = HashSet::with_capacity(parsed.len());
 
     for (u, v) in parsed {
-        let key = if u < v { (u, v) } else { (v, u) };
-        if seen.insert(key) {
+        let key = if u <= v { (u, v) } else { (v, u) };
+        if !seen.insert(key) {
+            continue;
+        }
+        if u == v {
+            adj[u].push(u);
+        } else {
             adj[u].push(v);
             adj[v].push(u);
         }

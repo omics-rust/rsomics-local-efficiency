@@ -257,3 +257,75 @@ fn gnm_100_500_seed20() {
         "gnm_100_500_seed20: expected {GNM_100_500_SEED20:.17e} got {v:.17e} err={err:.3e}"
     );
 }
+
+// --- Self-loop cases (oracle: networkx 3.6.1) ---
+// networkx keeps a self-loop as `v ∈ G[v]`, so the neighbour-induced subgraph
+// `G.subgraph(G[v])` gains `v` as a member and its global efficiency changes.
+// Each golden edge list is fed through both networkx `read_edgelist` and our
+// parser; the constants below are networkx `local_efficiency` outputs.
+
+#[test]
+fn selfloop_center() {
+    // 0-1,0-2,0-3,1-2 + self-loop 0-0 → v=0's subgraph gains node 0.
+    let expected = 0.708_333_333_333_333_4_f64;
+    let v = run(include_str!("golden/selfloop_case1.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case1: expected {expected:.17e} got {v:.17e}"
+    );
+}
+
+#[test]
+fn selfloop_leaves() {
+    // 0-1,0-2,0-3 + self-loops 1-1,2-2 → leaves 1,2 each get a 2-node subgraph.
+    let expected = 0.5_f64;
+    let v = run(include_str!("golden/selfloop_case2.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case2: expected {expected:.17e} got {v:.17e}"
+    );
+}
+
+#[test]
+fn selfloop_triangle_all() {
+    // Triangle with a self-loop on every node → each node's subgraph is a K3-minus.
+    let expected = 1.0_f64;
+    let v = run(include_str!("golden/selfloop_case3.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case3: expected {expected:.17e} got {v:.17e}"
+    );
+}
+
+#[test]
+fn selfloop_dense() {
+    // 0-1,0-2,0-3,1-2,1-3 + self-loop 0-0.
+    let expected = 0.9375_f64;
+    let v = run(include_str!("golden/selfloop_case4.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case4: expected {expected:.17e} got {v:.17e}"
+    );
+}
+
+#[test]
+fn selfloop_only() {
+    // Single node carrying only a self-loop → subgraph is one node → 0.
+    let expected = 0.0_f64;
+    let v = run(include_str!("golden/selfloop_case5.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case5: expected {expected:.17e} got {v:.17e}"
+    );
+}
+
+#[test]
+fn selfloop_on_leaf() {
+    // 0-1 + self-loop 1-1 → node 1's subgraph is {0,1} with edge 0-1.
+    let expected = 0.5_f64;
+    let v = run(include_str!("golden/selfloop_case6.txt"));
+    assert!(
+        (v - expected).abs() < EPS,
+        "selfloop_case6: expected {expected:.17e} got {v:.17e}"
+    );
+}

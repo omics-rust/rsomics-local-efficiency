@@ -10,8 +10,9 @@ rsomics-local-efficiency [--json] < edges.txt
 ```
 
 Input: one edge per line as `u v` (string node labels). Lines starting with `#`
-or blank lines are skipped. Parallel edges are deduplicated. Output: the scalar
-local efficiency printed to 17 significant digits.
+or blank lines are skipped. Parallel edges are deduplicated. Self-loops are kept
+(networkx stores `v` in its own adjacency, so `v` joins its neighbour set).
+Output: the scalar local efficiency printed to 17 significant digits.
 
 ```
 $ echo -e "0 1\n0 2\n0 3\n1 2\n1 3" | rsomics-local-efficiency
@@ -23,7 +24,8 @@ $ echo -e "0 1\n0 2\n0 3\n1 2\n1 3" | rsomics-local-efficiency
 `local_efficiency(G) = (Σ_v global_efficiency(G[N(v)])) / |V|`
 
 For each node `v`, the neighbour-induced subgraph `G[N(v)]` is formed from the
-set of `v`'s neighbours (not including `v`). Its global efficiency is:
+set of `v`'s neighbours — which includes `v` itself when `v` carries a
+self-loop, matching networkx `G[v]`. Its global efficiency is:
 
 `global_efficiency(H) = (Σ_{i≠j} 1/d(i,j)) / (|V|(|V|-1))`
 
