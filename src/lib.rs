@@ -11,7 +11,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Parse an undirected edge list from text.
 ///
-/// Lines starting with `#` or blank are skipped (nx.read_edgelist convention).
+/// Text from the first `#` onward is stripped as a comment; blank lines are skipped
+/// (nx.read_edgelist convention).
 /// Parallel edges are deduplicated (nx.Graph semantics). Self-loops are kept:
 /// networkx stores `v` in its own adjacency `G[v]`, so `adj[v]` includes `v`.
 /// This matters because `local_efficiency` induces a subgraph on `G[v]`, and a
@@ -26,8 +27,9 @@ pub fn parse_edge_list_ordered(input: &str) -> (usize, Vec<Vec<usize>>) {
     let mut parsed: Vec<(usize, usize)> = Vec::new();
 
     for line in input.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
+        // nx.parse_edgelist strips a '#' comment anywhere in the line before tokenising.
+        let line = line.split('#').next().unwrap_or("").trim();
+        if line.is_empty() {
             continue;
         }
         let mut parts = line.split_ascii_whitespace();
@@ -140,4 +142,22 @@ pub fn local_efficiency(n: usize, adj: &[Vec<usize>]) -> f64 {
         total += global_efficiency_subgraph(adj, &adj[v]);
     }
     total / n as f64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn inline_hash_comment_matches_clean_graph() {
+        let with_comments = "0 1\n1 2#c\n2 3\n0 #x\n";
+        let clean = "0 1\n1 2\n2 3\n";
+
+        let (n_c, adj_c) = parse_edge_list_ordered(with_comments);
+        let (n_r, adj_r) = parse_edge_list_ordered(clean);
+
+        assert_eq!(n_c, n_r);
+        assert_eq!(adj_c, adj_r);
+        assert_eq!(local_efficiency(n_c, &adj_c), local_efficiency(n_r, &adj_r));
+    }
 }
